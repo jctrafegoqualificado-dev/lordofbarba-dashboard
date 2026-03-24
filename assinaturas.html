@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lord of Barba — Assinaturas</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #f0f0f0; min-height: 100vh; }
+  header { background: #1a1a1a; border-bottom: 2px solid #c9a84c; padding: 20px 32px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 1.4rem; font-weight: 700; color: #c9a84c; }
+  header span { font-size: 0.85rem; color: #888; }
+  .nav { display: flex; gap: 12px; margin-left: auto; }
+  .nav a { font-size: 0.82rem; color: #888; text-decoration: none; padding: 6px 14px; border-radius: 8px; border: 1px solid #2a2a2a; }
+  .nav a:hover { color: #c9a84c; border-color: #c9a84c; }
+  .nav a.active { color: #c9a84c; border-color: #c9a84c; background: #1f1a0f; }
+  .container { padding: 24px 32px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .card { background: #1a1a1a; border-radius: 12px; padding: 20px; border: 1px solid #2a2a2a; }
+  .card .label { font-size: 0.75rem; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card .valor { font-size: 1.6rem; font-weight: 700; }
+  .card.verde .valor { color: #4caf88; }
+  .card.amarelo .valor { color: #c9a84c; }
+  .card.azul .valor { color: #5ab4e0; }
+  .card.laranja .valor { color: #e08a3a; }
+  .card .sub { font-size: 0.75rem; color: #666; margin-top: 4px; }
+
+  .box { background: #1a1a1a; border-radius: 12px; padding: 20px; border: 1px solid #2a2a2a; margin-bottom: 20px; }
+  .box h3 { font-size: 0.85rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+
+  /* ALERTAS VENCIMENTO */
+  .alertas { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .alerta { display: flex; align-items: center; gap: 14px; background: #1a1a1a; border-radius: 10px; padding: 14px 18px; border-left: 3px solid #2a2a2a; }
+  .alerta.hoje { border-left-color: #e05a5a; }
+  .alerta.amanha { border-left-color: #e08a3a; }
+  .alerta.semana { border-left-color: #c9a84c; }
+  .alerta-dia { font-size: 1.4rem; font-weight: 700; min-width: 40px; text-align: center; }
+  .alerta.hoje .alerta-dia { color: #e05a5a; }
+  .alerta.amanha .alerta-dia { color: #e08a3a; }
+  .alerta.semana .alerta-dia { color: #c9a84c; }
+  .alerta-info { flex: 1; }
+  .alerta-nome { font-weight: 600; font-size: 0.9rem; }
+  .alerta-sub { font-size: 0.75rem; color: #888; margin-top: 2px; }
+  .alerta-valor { font-weight: 700; color: #4caf88; }
+  .badge-venc { font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+  .badge-venc.hoje { background: #3a1a1a; color: #e05a5a; }
+  .badge-venc.amanha { background: #3a2a1a; color: #e08a3a; }
+  .badge-venc.semana { background: #2a2a1a; color: #c9a84c; }
+
+  /* TABELA */
+  .tabela-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  thead tr { background: #222; }
+  th { padding: 10px 12px; text-align: left; color: #888; font-weight: 600; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px; white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid #1e1e1e; white-space: nowrap; }
+  tr:hover td { background: #1e1e1e; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+  .badge.ativo { background: #1a3a2a; color: #4caf88; }
+  .badge.cancelado { background: #3a1a1a; color: #e05a5a; }
+  .badge.pendente { background: #3a2a1a; color: #e08a3a; }
+  .tel { color: #5ab4e0; font-size: 0.8rem; }
+  .venc-destaque { font-weight: 700; color: #c9a84c; }
+  .nenhum { text-align: center; padding: 32px; color: #555; }
+  .sem-alerta { color: #555; font-size: 0.85rem; text-align: center; padding: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>✂️ Lord of Barba</h1>
+    <span>Assinaturas</span>
+  </div>
+  <nav class="nav">
+    <a href="dashboard.html">Financeiro</a>
+    <a href="assinaturas.html" class="active">Assinaturas</a>
+  </nav>
+</header>
+
+<div class="container">
+
+  <!-- CARDS -->
+  <div class="cards">
+    <div class="card verde">
+      <div class="label">Assinantes Ativos</div>
+      <div class="valor" id="card-ativos">0</div>
+      <div class="sub" id="card-total-sub"></div>
+    </div>
+    <div class="card amarelo">
+      <div class="label">Receita Recorrente</div>
+      <div class="valor" id="card-mrr">R$ 0,00</div>
+      <div class="sub">por mês</div>
+    </div>
+    <div class="card laranja">
+      <div class="label">Vencem esta semana</div>
+      <div class="valor" id="card-semana">0</div>
+      <div class="sub" id="card-semana-val"></div>
+    </div>
+    <div class="card azul">
+      <div class="label">Próximo Vencimento</div>
+      <div class="valor" id="card-proximo">—</div>
+      <div class="sub" id="card-proximo-nome"></div>
+    </div>
+  </div>
+
+  <!-- ALERTAS -->
+  <div class="box">
+    <h3>Vencimentos Próximos (7 dias)</h3>
+    <div id="alertas-lista"></div>
+  </div>
+
+  <!-- TABELA ASSINANTES -->
+  <div class="box">
+    <h3>Todos os Assinantes <span id="total-count" style="color:#c9a84c;"></span></h3>
+    <div class="tabela-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nome</th>
+            <th>Telefone</th>
+            <th>Início</th>
+            <th>Próx. Vencimento</th>
+            <th>Plano</th>
+            <th>Valor</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const CLIENTES = [
+  {Nome:"Wesley Henrique", Telefone:"41995497154", DataInicio:"20/03/2026", ProxVenc:"20/04/2026", Plano:"Plano Lord Cabelo", Valor:74.90, Status:"ATIVO"},
+  {Nome:"Weverton Henrique", Telefone:"41998434846", DataInicio:"20/03/2026", ProxVenc:"20/04/2026", Plano:"Plano Lord Cabelo", Valor:74.90, Status:"ATIVO"},
+  {Nome:"Joselyn Tamayo", Telefone:"41996342151", DataInicio:"23/03/2026", ProxVenc:"23/04/2026", Plano:"Mensal", Valor:74.90, Status:"ATIVO"},
+  {Nome:"André Borges", Telefone:"41999169705", DataInicio:"24/03/2026", ProxVenc:"24/04/2026", Plano:"Plano Lord Cabelo", Valor:74.90, Status:"ATIVO"}
+];
+
+function parseData(str) {
+  const [d,m,a] = str.split('/');
+  return new Date(`${a}-${m}-${d}T00:00:00`);
+}
+
+function fmt(v) {
+  return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function diffDias(d) {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  return Math.round((d - hoje) / 86400000);
+}
+
+const ativos = CLIENTES.filter(c => c.Status === 'ATIVO');
+const mrr = ativos.reduce((s,c) => s + c.Valor, 0);
+
+// Cards
+document.getElementById('card-ativos').textContent = ativos.length;
+document.getElementById('card-total-sub').textContent = `${CLIENTES.length} cadastrado(s)`;
+document.getElementById('card-mrr').textContent = fmt(mrr);
+
+// Próximos 7 dias
+const semana = ativos.filter(c => { const d = diffDias(parseData(c.ProxVenc)); return d >= 0 && d <= 7; });
+document.getElementById('card-semana').textContent = semana.length;
+document.getElementById('card-semana-val').textContent = semana.length ? fmt(semana.reduce((s,c)=>s+c.Valor,0)) : 'nenhum';
+
+// Próximo vencimento
+const sorted = [...ativos].sort((a,b) => parseData(a.ProxVenc) - parseData(b.ProxVenc));
+if (sorted.length) {
+  const prox = sorted[0];
+  const d = parseData(prox.ProxVenc);
+  document.getElementById('card-proximo').textContent = prox.ProxVenc.slice(0,5);
+  document.getElementById('card-proximo-nome').textContent = prox.Nome;
+}
+
+// Alertas
+const alertasEl = document.getElementById('alertas-lista');
+const proximos = ativos
+  .map(c => ({...c, dias: diffDias(parseData(c.ProxVenc))}))
+  .filter(c => c.dias >= 0 && c.dias <= 7)
+  .sort((a,b) => a.dias - b.dias);
+
+if (!proximos.length) {
+  alertasEl.innerHTML = '<div class="sem-alerta">Nenhum vencimento nos próximos 7 dias</div>';
+} else {
+  alertasEl.innerHTML = proximos.map(c => {
+    const cls = c.dias === 0 ? 'hoje' : c.dias === 1 ? 'amanha' : 'semana';
+    const label = c.dias === 0 ? 'HOJE' : c.dias === 1 ? 'AMANHÃ' : `em ${c.dias}d`;
+    return `
+    <div class="alerta ${cls}">
+      <div class="alerta-dia">${c.ProxVenc.slice(0,2)}</div>
+      <div class="alerta-info">
+        <div class="alerta-nome">${c.Nome}</div>
+        <div class="alerta-sub">${c.Plano} &bull; ${c.Telefone}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        <div class="alerta-valor">${fmt(c.Valor)}</div>
+        <span class="badge-venc ${cls}">${label}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Tabela
+document.getElementById('total-count').textContent = `(${CLIENTES.length})`;
+document.getElementById('tbody').innerHTML = CLIENTES.map((c,i) => {
+  const dias = diffDias(parseData(c.ProxVenc));
+  const vencCls = dias <= 0 ? 'color:#e05a5a' : dias <= 3 ? 'color:#e08a3a' : dias <= 7 ? 'color:#c9a84c' : 'color:#f0f0f0';
+  const statusCls = c.Status === 'ATIVO' ? 'ativo' : c.Status === 'CANCELADO' ? 'cancelado' : 'pendente';
+  return `
+  <tr>
+    <td style="color:#555">${i+1}</td>
+    <td style="font-weight:600">${c.Nome}</td>
+    <td class="tel">${c.Telefone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}</td>
+    <td>${c.DataInicio}</td>
+    <td style="${vencCls};font-weight:600">${c.ProxVenc}</td>
+    <td style="color:#888">${c.Plano}</td>
+    <td style="color:#4caf88;font-weight:700">${fmt(c.Valor)}</td>
+    <td><span class="badge ${statusCls}">${c.Status}</span></td>
+  </tr>`;
+}).join('');
+</script>
+</body>
+</html>

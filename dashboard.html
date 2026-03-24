@@ -68,12 +68,22 @@
 </head>
 <body>
 
+<style>
+  .nav { display: flex; gap: 12px; }
+  .nav a { font-size: 0.82rem; color: #888; text-decoration: none; padding: 6px 14px; border-radius: 8px; border: 1px solid #2a2a2a; }
+  .nav a:hover { color: #c9a84c; border-color: #c9a84c; }
+  .nav a.active { color: #c9a84c; border-color: #c9a84c; background: #1f1a0f; }
+</style>
 <header>
   <div>
     <h1>✂️ Lord of Barba</h1>
     <span>Dashboard Financeiro</span>
   </div>
-  <div style="margin-left:auto;font-size:0.78rem;color:#555;" id="ultima-atualizacao"></div>
+  <nav class="nav" style="margin-left:auto;">
+    <a href="dashboard.html" class="active">Financeiro</a>
+    <a href="assinaturas.html">Assinaturas</a>
+  </nav>
+  <div style="font-size:0.78rem;color:#555;margin-left:16px;" id="ultima-atualizacao"></div>
 </header>
 
 <div class="container">
