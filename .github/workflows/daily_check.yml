@@ -1,0 +1,27 @@
+name: Verificar Vencimentos do Dia
+
+on:
+  schedule:
+    - cron: '0 11 * * *'  # 08h00 horário de Brasília (UTC-3)
+  workflow_dispatch:       # Permite rodar manualmente para testar
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Instalar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Verificar vencimentos e notificar WhatsApp
+        env:
+          CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          GOOGLE_CREDS: ${{ secrets.GOOGLE_CREDS }}
+        run: python scripts/check_billing.py

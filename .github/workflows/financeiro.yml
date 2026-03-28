@@ -1,0 +1,68 @@
+name: Agente Financeiro
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: 'O que deseja fazer?'
+        required: true
+        type: choice
+        options:
+          - ADD_TRANSACTION
+          - REPORT
+        default: ADD_TRANSACTION
+      tipo:
+        description: 'Tipo (ENTRADA ou SAIDA)'
+        required: false
+        type: choice
+        options:
+          - ENTRADA
+          - SAIDA
+      valor:
+        description: 'Valor (ex: 150.00)'
+        required: false
+      descricao:
+        description: 'Descrição (ex: Cortes do dia, Aluguel, Produtos)'
+        required: false
+      categoria:
+        description: 'Categoria'
+        required: false
+        type: choice
+        options:
+          - Serviços
+          - Assinaturas
+          - Produtos
+          - Aluguel
+          - Salários
+          - Marketing
+          - Outros
+
+  schedule:
+    - cron: '0 22 * * 1'  # Toda segunda-feira às 19h (BRT) — relatório semanal
+
+jobs:
+  financeiro:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Instalar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Executar agente financeiro
+        env:
+          CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          GOOGLE_CREDS: ${{ secrets.GOOGLE_CREDS }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MODE: ${{ github.event.inputs.modo || 'REPORT' }}
+          TIPO: ${{ github.event.inputs.tipo }}
+          VALOR: ${{ github.event.inputs.valor }}
+          DESCRICAO: ${{ github.event.inputs.descricao }}
+          CATEGORIA: ${{ github.event.inputs.categoria }}
+        run: python scripts/financial_agent.py

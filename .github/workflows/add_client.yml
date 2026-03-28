@@ -1,0 +1,47 @@
+name: Adicionar Cliente
+
+on:
+  workflow_dispatch:
+    inputs:
+      nome:
+        description: 'Nome do cliente'
+        required: true
+      telefone:
+        description: 'Telefone (ex: 41999999999)'
+        required: true
+      data_inicio:
+        description: 'Data de início da assinatura (DD/MM/AAAA)'
+        required: true
+      plano:
+        description: 'Plano (ex: Mensal, Trimestral)'
+        required: false
+        default: 'Mensal'
+      valor:
+        description: 'Valor da assinatura (ex: 99.90)'
+        required: false
+        default: '99.90'
+
+jobs:
+  add:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Instalar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Adicionar cliente na planilha
+        env:
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          GOOGLE_CREDS: ${{ secrets.GOOGLE_CREDS }}
+          CLIENTE_NOME: ${{ github.event.inputs.nome }}
+          CLIENTE_TELEFONE: ${{ github.event.inputs.telefone }}
+          CLIENTE_DATA: ${{ github.event.inputs.data_inicio }}
+          CLIENTE_PLANO: ${{ github.event.inputs.plano }}
+          CLIENTE_VALOR: ${{ github.event.inputs.valor }}
+        run: python scripts/add_client.py

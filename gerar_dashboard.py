@@ -1,0 +1,316 @@
+import csv, os, json
+from datetime import datetime
+
+caminho_csv = os.path.join(os.path.dirname(__file__), 'financeiro.csv')
+caminho_html = os.path.join(os.path.dirname(__file__), 'dashboard.html')
+
+rows = []
+with open(caminho_csv, 'r', encoding='utf-8-sig') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        rows.append(row)
+
+dados_json = json.dumps(rows, ensure_ascii=False)
+
+html = f"""<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lord of Barba — Dashboard Financeiro</title>
+<style>
+  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+  body {{ font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #f0f0f0; min-height: 100vh; }}
+  header {{ background: #1a1a1a; border-bottom: 2px solid #c9a84c; padding: 20px 32px; display: flex; align-items: center; gap: 16px; }}
+  header h1 {{ font-size: 1.4rem; font-weight: 700; color: #c9a84c; }}
+  header span {{ font-size: 0.85rem; color: #888; }}
+  .container {{ padding: 24px 32px; }}
+
+  /* FILTROS */
+  .filtros {{ display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 28px; background: #1a1a1a; padding: 16px 20px; border-radius: 12px; border: 1px solid #2a2a2a; }}
+  .filtros label {{ font-size: 0.75rem; color: #888; display: block; margin-bottom: 4px; }}
+  .filtros input, .filtros select {{ background: #0f0f0f; border: 1px solid #333; color: #f0f0f0; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; }}
+  .filtros input:focus, .filtros select:focus {{ outline: none; border-color: #c9a84c; }}
+  .btn {{ background: #c9a84c; color: #000; border: none; padding: 8px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }}
+  .btn:hover {{ background: #e0be6a; }}
+  .btn-clear {{ background: #2a2a2a; color: #ccc; }}
+  .btn-clear:hover {{ background: #333; color: #fff; }}
+
+  /* CARDS */
+  .cards {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }}
+  .card {{ background: #1a1a1a; border-radius: 12px; padding: 20px; border: 1px solid #2a2a2a; }}
+  .card .label {{ font-size: 0.75rem; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }}
+  .card .valor {{ font-size: 1.6rem; font-weight: 700; }}
+  .card.verde .valor {{ color: #4caf88; }}
+  .card.vermelho .valor {{ color: #e05a5a; }}
+  .card.amarelo .valor {{ color: #c9a84c; }}
+  .card.azul .valor {{ color: #5ab4e0; }}
+  .card .sub {{ font-size: 0.75rem; color: #666; margin-top: 4px; }}
+
+  /* GRID INFERIOR */
+  .grid2 {{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }}
+  @media(max-width: 768px) {{ .grid2 {{ grid-template-columns: 1fr; }} }}
+
+  .box {{ background: #1a1a1a; border-radius: 12px; padding: 20px; border: 1px solid #2a2a2a; }}
+  .box h3 {{ font-size: 0.85rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }}
+  .bar-item {{ margin-bottom: 10px; }}
+  .bar-label {{ display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px; }}
+  .bar-label .nome {{ color: #ccc; }}
+  .bar-label .val {{ color: #c9a84c; font-weight: 600; }}
+  .bar-bg {{ background: #2a2a2a; border-radius: 4px; height: 6px; }}
+  .bar-fill {{ background: #c9a84c; border-radius: 4px; height: 6px; transition: width 0.3s; }}
+  .bar-fill.red {{ background: #e05a5a; }}
+
+  /* TABELA */
+  .tabela-wrap {{ overflow-x: auto; }}
+  table {{ width: 100%; border-collapse: collapse; font-size: 0.82rem; }}
+  thead tr {{ background: #222; }}
+  th {{ padding: 10px 12px; text-align: left; color: #888; font-weight: 600; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px; white-space: nowrap; }}
+  td {{ padding: 10px 12px; border-bottom: 1px solid #1e1e1e; white-space: nowrap; }}
+  tr:hover td {{ background: #1e1e1e; }}
+  .badge {{ display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }}
+  .badge.entrada {{ background: #1a3a2a; color: #4caf88; }}
+  .badge.saida {{ background: #3a1a1a; color: #e05a5a; }}
+  .taxa {{ color: #e05a5a; font-size: 0.78rem; }}
+  .liq {{ color: #4caf88; font-weight: 600; }}
+  .nenhum {{ text-align: center; padding: 32px; color: #555; }}
+
+  /* RESUMO TAXAS */
+  .taxa-resumo {{ font-size: 0.78rem; color: #888; margin-top: 8px; }}
+  .taxa-resumo span {{ color: #e05a5a; }}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>✂️ Lord of Barba</h1>
+    <span>Dashboard Financeiro</span>
+  </div>
+  <div style="margin-left:auto;font-size:0.78rem;color:#555;" id="ultima-atualizacao"></div>
+</header>
+
+<div class="container">
+
+  <!-- FILTROS -->
+  <div class="filtros">
+    <div>
+      <label>Data inicial</label>
+      <input type="date" id="data-ini">
+    </div>
+    <div>
+      <label>Data final</label>
+      <input type="date" id="data-fim">
+    </div>
+    <div>
+      <label>Tipo</label>
+      <select id="filtro-tipo">
+        <option value="">Todos</option>
+        <option value="ENTRADA">Entradas</option>
+        <option value="SAIDA">Saídas</option>
+      </select>
+    </div>
+    <div>
+      <label>Categoria</label>
+      <select id="filtro-cat">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div>
+      <label>Forma Pgto</label>
+      <select id="filtro-forma">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <button class="btn" onclick="aplicarFiltros()">Filtrar</button>
+    <button class="btn btn-clear" onclick="limparFiltros()">Limpar</button>
+  </div>
+
+  <!-- CARDS -->
+  <div class="cards">
+    <div class="card verde">
+      <div class="label">Entradas Líquidas</div>
+      <div class="valor" id="card-entradas">R$ 0,00</div>
+      <div class="sub" id="card-entradas-bruto"></div>
+    </div>
+    <div class="card vermelho">
+      <div class="label">Saídas</div>
+      <div class="valor" id="card-saidas">R$ 0,00</div>
+      <div class="sub" id="card-saidas-qtd"></div>
+    </div>
+    <div class="card amarelo">
+      <div class="label">Saldo</div>
+      <div class="valor" id="card-saldo">R$ 0,00</div>
+    </div>
+    <div class="card azul">
+      <div class="label">Taxas Descontadas</div>
+      <div class="valor" id="card-taxas">R$ 0,00</div>
+      <div class="sub" id="card-taxas-pct"></div>
+    </div>
+  </div>
+
+  <!-- BARRAS -->
+  <div class="grid2">
+    <div class="box">
+      <h3>Entradas por Forma de Pagamento</h3>
+      <div id="barras-forma"></div>
+    </div>
+    <div class="box">
+      <h3>Saídas por Categoria</h3>
+      <div id="barras-cat"></div>
+    </div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="box">
+    <h3 style="margin-bottom:14px">Lançamentos <span id="total-registros" style="color:#c9a84c;"></span></h3>
+    <div class="tabela-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Tipo</th>
+            <th>Descrição</th>
+            <th>Categoria</th>
+            <th>Forma Pgto</th>
+            <th>Bruto</th>
+            <th>Taxa</th>
+            <th>Líquido</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DADOS = {dados_json};
+
+function parseData(str) {{
+  const [d,m,a] = str.split('/');
+  return new Date(`${{a}}-${{m}}-${{d}}`);
+}}
+
+function fmt(v) {{
+  return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', {{minimumFractionDigits:2, maximumFractionDigits:2}});
+}}
+
+// Popular selects
+const cats = [...new Set(DADOS.map(r => r.Categoria))].sort();
+const formas = [...new Set(DADOS.filter(r=>r.Tipo==='ENTRADA').map(r => r['Forma Pagamento']))].sort();
+cats.forEach(c => document.getElementById('filtro-cat').innerHTML += `<option value="${{c}}">${{c}}</option>`);
+formas.forEach(f => document.getElementById('filtro-forma').innerHTML += `<option value="${{f}}">${{f}}</option>`);
+
+// Data padrão: mês atual
+const hoje = new Date();
+const ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+const fim = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0);
+document.getElementById('data-ini').value = ini.toISOString().split('T')[0];
+document.getElementById('data-fim').value = fim.toISOString().split('T')[0];
+document.getElementById('ultima-atualizacao').textContent = 'Atualizado: ' + hoje.toLocaleString('pt-BR');
+
+function filtrar() {{
+  const di = document.getElementById('data-ini').value;
+  const df = document.getElementById('data-fim').value;
+  const tipo = document.getElementById('filtro-tipo').value;
+  const cat = document.getElementById('filtro-cat').value;
+  const forma = document.getElementById('filtro-forma').value;
+
+  return DADOS.filter(r => {{
+    const d = parseData(r.Data);
+    if (di && d < new Date(di)) return false;
+    if (df && d > new Date(df + 'T23:59:59')) return false;
+    if (tipo && r.Tipo !== tipo) return false;
+    if (cat && r.Categoria !== cat) return false;
+    if (forma && r['Forma Pagamento'] !== forma) return false;
+    return true;
+  }});
+}}
+
+function renderBarras(idEl, itens, tipo, maxVal) {{
+  const el = document.getElementById(idEl);
+  if (!itens.length) {{ el.innerHTML = '<div style="color:#555;font-size:0.8rem;">Nenhum dado</div>'; return; }}
+  el.innerHTML = itens.map(([nome, val]) => `
+    <div class="bar-item">
+      <div class="bar-label"><span class="nome">${{nome}}</span><span class="val">${{fmt(val)}}</span></div>
+      <div class="bar-bg"><div class="bar-fill ${{tipo}}" style="width:${{(val/maxVal*100).toFixed(1)}}%"></div></div>
+    </div>
+  `).join('');
+}}
+
+function aplicarFiltros() {{
+  const dados = filtrar();
+
+  const entradas = dados.filter(r => r.Tipo === 'ENTRADA');
+  const saidas = dados.filter(r => r.Tipo === 'SAIDA');
+
+  const totalBruto = entradas.reduce((s,r) => s + parseFloat(r['Valor Bruto']), 0);
+  const totalTaxa = entradas.reduce((s,r) => s + parseFloat(r['Taxa R$']), 0);
+  const totalLiq = entradas.reduce((s,r) => s + parseFloat(r['Valor Liquido']), 0);
+  const totalSaidas = saidas.reduce((s,r) => s + parseFloat(r['Valor Bruto']), 0);
+  const saldo = totalLiq - totalSaidas;
+
+  document.getElementById('card-entradas').textContent = fmt(totalLiq);
+  document.getElementById('card-entradas-bruto').textContent = `Bruto: ${{fmt(totalBruto)}}`;
+  document.getElementById('card-saidas').textContent = fmt(totalSaidas);
+  document.getElementById('card-saidas-qtd').textContent = `${{saidas.length}} lançamento(s)`;
+  document.getElementById('card-saldo').textContent = fmt(saldo);
+  document.getElementById('card-saldo').style.color = saldo >= 0 ? '#4caf88' : '#e05a5a';
+  document.getElementById('card-taxas').textContent = fmt(totalTaxa);
+  document.getElementById('card-taxas-pct').textContent = totalBruto > 0 ? `${{(totalTaxa/totalBruto*100).toFixed(2)}}% do bruto` : '';
+
+  // Barras por forma pgto
+  const porForma = {{}};
+  entradas.forEach(r => {{ const k = r['Forma Pagamento']; porForma[k] = (porForma[k]||0) + parseFloat(r['Valor Liquido']); }});
+  const formaItens = Object.entries(porForma).sort((a,b) => b[1]-a[1]);
+  const maxForma = formaItens[0]?.[1] || 1;
+  renderBarras('barras-forma', formaItens, '', maxForma);
+
+  // Barras por categoria saidas
+  const porCat = {{}};
+  saidas.forEach(r => {{ const k = r.Categoria; porCat[k] = (porCat[k]||0) + parseFloat(r['Valor Bruto']); }});
+  const catItens = Object.entries(porCat).sort((a,b) => b[1]-a[1]);
+  const maxCat = catItens[0]?.[1] || 1;
+  renderBarras('barras-cat', catItens, 'red', maxCat);
+
+  // Tabela
+  document.getElementById('total-registros').textContent = `(${{dados.length}} registros)`;
+  const tbody = document.getElementById('tbody');
+  if (!dados.length) {{
+    tbody.innerHTML = '<tr><td colspan="8" class="nenhum">Nenhum lançamento no período</td></tr>';
+    return;
+  }}
+  tbody.innerHTML = dados.map(r => `
+    <tr>
+      <td>${{r.Data}}</td>
+      <td><span class="badge ${{r.Tipo.toLowerCase()}}">${{r.Tipo}}</span></td>
+      <td>${{r.Descricao}}</td>
+      <td>${{r.Categoria}}</td>
+      <td>${{r['Forma Pagamento'] === '-' ? '—' : r['Forma Pagamento']}}</td>
+      <td>${{fmt(r['Valor Bruto'])}}</td>
+      <td class="taxa">${{parseFloat(r['Taxa R$']) > 0 ? '-' + fmt(r['Taxa R$']) : '—'}}</td>
+      <td class="${{r.Tipo === 'ENTRADA' ? 'liq' : 'taxa'}}">${{r.Tipo === 'ENTRADA' ? fmt(r['Valor Liquido']) : fmt(r['Valor Bruto'])}}</td>
+    </tr>
+  `).join('');
+}}
+
+function limparFiltros() {{
+  document.getElementById('data-ini').value = '';
+  document.getElementById('data-fim').value = '';
+  document.getElementById('filtro-tipo').value = '';
+  document.getElementById('filtro-cat').value = '';
+  document.getElementById('filtro-forma').value = '';
+  aplicarFiltros();
+}}
+
+aplicarFiltros();
+</script>
+</body>
+</html>"""
+
+with open(caminho_html, 'w', encoding='utf-8') as f:
+    f.write(html)
+
+print(f'Dashboard gerado: {caminho_html}')
